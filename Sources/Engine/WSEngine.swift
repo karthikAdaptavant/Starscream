@@ -153,7 +153,10 @@ public class WSEngine:
             secKeyValue = HTTPWSHeader.generateWebSocketKey()
             let wsReq = HTTPWSHeader.createUpgrade(request: request, supportsCompression: framer.supportsCompression(), secKeyValue: secKeyValue)
             let data = httpHandler.convert(request: wsReq)
-            transport.write(data: data, completion: {_ in })
+            transport.write(data: data) { error in
+                guard let error else { return }
+                debugPrint("WSEngine: \(error.localizedDescription)")
+            }
         case .timeout(let error):
             broadcast(event: .timeout(error))
         case .waiting(let error), .failed(let error):

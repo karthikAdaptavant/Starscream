@@ -90,7 +90,7 @@ public enum WebSocketEvent {
 }
 
 public protocol WebSocketDelegate: AnyObject {
-    func didReceive(event: WebSocketEvent, client: WebSocketClient)
+    func didReceive(event: WebSocketEvent)
 }
 
 open class WebSocket: WebSocketClient, EngineDelegate {
@@ -99,8 +99,6 @@ open class WebSocket: WebSocketClient, EngineDelegate {
     public var onEvent: ((WebSocketEvent) -> Void)?
     
     public var request: URLRequest
-    // Where the callback is executed. It defaults to the main UI thread queue.
-    public var callbackQueue = DispatchQueue.main
     public var respondToPingWithPong: Bool {
         set {
             guard let e = engine as? WSEngine else { return }
@@ -171,10 +169,11 @@ open class WebSocket: WebSocketClient, EngineDelegate {
     
     // MARK: - EngineDelegate
     public func didReceive(event: WebSocketEvent) {
-        callbackQueue.async { [weak self] in
-            guard let s = self else { return }
-            s.delegate?.didReceive(event: event, client: s)
-            s.onEvent?(event)
-        }
+        delegate?.didReceive(event: event)
+        onEvent?(event)
+    }
+
+    deinit {
+        debugPrint("Websocket deinited \(Date())")
     }
 }
